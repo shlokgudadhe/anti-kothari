@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { requireApproved } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { calculateBalances } from "@/lib/balances";
+import { calculateBalances, simplifyBalances } from "@/lib/balances";
 import { notFound } from "next/navigation";
 
 const colors=["lime","violet","orange","cyan"];
@@ -16,11 +16,13 @@ export default async function Group({params}:{params:Promise<{id:string}>}){
   ]);
   const people=(members||[]).map((m:any)=>m.profiles).filter(Boolean);
   const balances=calculateBalances((members||[]).map((member:any)=>member.user_id),expenses||[],settlements||[]); const net=balances.get(me.id)||0;
+  const debts=simplifyBalances(balances).filter(transfer=>transfer.from===me.id).map(transfer=>({ ...transfer, person:people.find((person:any)=>person.id===transfer.to) }));
   const events=[...(expenses||[]).map((e:any)=>({kind:"expense",at:e.created_at,item:e})),...(settlements||[]).map((item:any)=>({kind:"settlement",at:item.created_at,item}))].sort((a,b)=>new Date(b.at).getTime()-new Date(a.at).getTime());
   return <><Nav/><main className="terminal-shell group-terminal">
     <header className="group-terminal-head"><Link href="/groups">←</Link><h1>{group.name}</h1><Link href={"/groups/"+id+"/members"}>⋮</Link></header>
     <div className="member-stack">{people.slice(0,5).map((p:any,index:number)=><span key={p.id} className={"member-disc "+colors[index%colors.length]}>{(p.full_name||p.email).slice(0,1).toUpperCase()}</span>)}</div>
     <section className={"group-balance-block "+(net>=0?"positive-block":"negative-block")}><b>{net>=0?"You get back":"You owe"} ₹{Math.abs(net).toFixed(2)} overall</b><Link href={"/groups/"+id+"/settle"}>Settle up</Link></section>
+    {debts.length>0&&<section className="terminal-section group-debts"><div className="terminal-section-title"><h2>SIMPLIFIED DEBTS</h2></div><div className="debt-list">{debts.map((debt,index)=><div className="debt-row" key={debt.to}><span className={"member-disc "+colors[index%colors.length]}>{(debt.person?.full_name||debt.person?.email||"?").slice(0,1).toUpperCase()}</span><span><b>{debt.person?.full_name||debt.person?.email||"Member"}</b><small>You owe</small></span><strong>₹{debt.amount.toFixed(2)}</strong></div>)}</div></section>}
     <section className="terminal-section group-expenses"><div className="terminal-section-title"><h2>ACTIVITY</h2><Link href={"/groups/"+id+"/add"}>Add</Link></div>
       {!events.length?<div className="terminal-empty"><p>No activity yet.</p><Link className="brutal-button violet-fill" href={"/groups/"+id+"/add"}>Add expense</Link></div>:<div className="expense-feed">{events.map((event:any,index:number)=>event.kind==="expense"?<Link key={event.item.id} href={"/groups/"+id+"/expenses/"+event.item.id} className="expense-line"><span className={"expense-rail "+colors[index%colors.length]}/><span className="expense-line-copy"><b>{event.item.profiles?.full_name||event.item.profiles?.email||"A member"} added {event.item.description}</b><small>{event.item.category} · {event.item.expense_date}</small></span><b>₹{Number(event.item.amount).toFixed(2)}</b></Link>:<div key={event.item.id} className="expense-line"><span className="expense-rail cyan"/><span className="expense-line-copy"><b>{event.item.payer?.full_name||"A member"} paid {event.item.payee?.full_name||"a member"}</b><small>Payment recorded</small></span><b>₹{Number(event.item.amount).toFixed(2)}</b></div>)}</div>}
     </section>
