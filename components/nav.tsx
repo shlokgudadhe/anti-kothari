@@ -8,7 +8,6 @@ export async function Nav() {
     <Link href="/dashboard"><span>⌂</span>Home</Link>
     <Link href="/groups"><span>▦</span>Groups</Link>
     <Link className="nav-add" href="/groups/new" aria-label="Create group">+</Link>
-    <Link href="/activity"><span>◉</span>Activity</Link>
     <Link href="/profile"><span>{(user.full_name||user.email).slice(0,1).toUpperCase()}</span>Profile</Link>
   </nav>;
 }
