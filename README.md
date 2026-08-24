@@ -33,4 +33,4 @@ npm run dev
 - Expense editing/deletion with an immutable audit history
 - Settlement suggestions that minimize the number of transfers
 - Receipt uploads and OCR-assisted expense entry
-- Push/email reminders and UPI deep links
+- Push/email reminders
