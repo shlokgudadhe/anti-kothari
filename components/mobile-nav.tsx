@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 export function MobileNav({ initial }: { initial: string }) {
   const path = usePathname();
-  const showProfile = path === "/dashboard" || path === "/groups";
+  const showProfile = path === "/dashboard" || path === "/groups" || path === "/pending";
   return <>
     {showProfile && <Link className="profile-corner" href="/profile" aria-label="Open profile" prefetch={true}>{initial}</Link>}
     <nav className="bottom-nav" aria-label="Main navigation">
