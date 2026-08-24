@@ -1,6 +1,6 @@
-# Tally
+# anti-kothari
 
-A private, Google-authenticated expense-sharing app for a friend group. It runs on Vercel and stores persistent data in Supabase Postgres.
+A private, Google-authenticated expense-sharing app for a friend group. It runs on Vercel and stores persistent data in Supabase Postgres. Set `NEXT_PUBLIC_APP_NAME` to change the displayed app name.
 
 ## What it includes
 
