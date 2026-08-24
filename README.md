@@ -12,7 +12,7 @@ A private, Google-authenticated expense-sharing app for a friend group. It runs 
 
 ## Deploy
 
-1. Create a Supabase project and run [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) in its SQL Editor.
+1. Create a Supabase project and run [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql), then [`supabase/migrations/002_expense_flexibility.sql`](supabase/migrations/002_expense_flexibility.sql), in its SQL Editor.
 2. In **Authentication → Providers → Google**, enable Google. Create Google OAuth credentials, then add Supabase's callback URL shown in that provider screen to the Google Cloud Console.
 3. Set the Site URL in **Authentication → URL Configuration** to your production Vercel URL. Add `http://localhost:3000/auth/callback` and `https://YOUR-APP.vercel.app/auth/callback` to Redirect URLs.
 4. Create `.env.local` from `.env.example`. Add the Supabase URL, publishable/anon key, service-role key, `ADMIN_EMAILS`, and `NEXT_PUBLIC_SITE_URL`.
