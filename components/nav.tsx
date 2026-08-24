@@ -3,6 +3,7 @@ import { currentProfile } from "@/lib/auth";
 import { signOut } from "@/app/actions";
 import { appName } from "@/lib/config";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SubmitButton } from "@/components/submit-button";
 
 export async function Nav() {
   const user = await currentProfile();
@@ -15,7 +16,7 @@ export async function Nav() {
       <Link href="/dashboard"><span>⌂</span>Home</Link>
       <Link href="/groups"><span>◫</span>Groups</Link>
       {user.role === "admin" && <Link href="/admin"><span>⚙</span>Admin</Link>}
-      <form action={signOut}><button><span>↪</span>Sign out</button></form>
+      <form action={signOut}><SubmitButton className="signout-button" pendingLabel="Signing out…"><span>↪</span>Sign out</SubmitButton></form>
     </nav>}
   </>;
 }
