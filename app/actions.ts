@@ -30,8 +30,26 @@ export async function addExpense(data:FormData){
 }
 export async function deleteExpense(data:FormData){const user=await requireApproved();const id=String(data.get("expense_id"));const groupId=String(data.get("group_id"));const s=await createClient();const {error}=await s.from("expenses").delete().eq("id",id).eq("created_by",user.id);if(error)throw new Error(error.message);refreshGroup(groupId);redirect(`/groups/${groupId}`);}
 export async function settleUp(data:FormData){const user=await requireApproved();const groupId=String(data.get("group_id"));const to=String(data.get("to"));const amount=Number(data.get("amount"));if(!to||!Number.isFinite(amount)||amount<=0)return;const s=await createClient();const {error}=await s.from("settlements").insert({group_id:groupId,paid_by:user.id,paid_to:to,amount});if(error)throw new Error(error.message);refreshGroup(groupId);redirect(`/groups/${groupId}`);}
-export async function addGroupMember(data:FormData){await requireApproved();const groupId=String(data.get("group_id"));const email=String(data.get("email")||"").trim().toLowerCase();if(!email)return;const db=adminDb();const {data:person}=await db.from("profiles").select("id,status").eq("email",email).single();if(!person)throw new Error("That person needs to sign in with Google first.");if(person.status!=="approved")throw new Error("That person has not been approved by an admin yet.");await db.from("group_members").upsert({group_id:groupId,user_id:person.id});revalidatePath(`/groups/${groupId}/members`);revalidatePath(`/groups/${groupId}`);redirect(`/groups/${groupId}/members`);}
+export async function addGroupMember(data:FormData){
+  await requireApproved();
+  const groupId = String(data.get("group_id"));
+  const input = String(data.get("email") || "").trim().toLowerCase();
+  if (!input) return;
+  const emailsOrIds = input.split(",").map(e => e.trim()).filter(Boolean);
+  const db = adminDb();
+  for (const item of emailsOrIds) {
+    const isId = item.includes("-") && item.length > 20;
+    const { data: p } = await db.from("profiles").select("id,status").eq(isId ? "id" : "email", item).single();
+    if (p && p.status === "approved") {
+      await db.from("group_members").upsert({ group_id: groupId, user_id: p.id });
+    }
+  }
+  revalidatePath(`/groups/${groupId}/members`);
+  revalidatePath(`/groups/${groupId}`);
+  redirect(`/groups/${groupId}/members`);
+}
 export async function updateUser(data:FormData){const actor=await requireAdmin();const id=String(data.get("id"));const action=String(data.get("action"));if(id===actor.id&&(action==="remove"||action==="member"))throw new Error("You cannot remove or demote your own admin account.");const db=adminDb();if(action==="approve")await db.from("profiles").update({status:"approved"}).eq("id",id);if(action==="remove")await db.from("profiles").update({status:"removed",role:"member"}).eq("id",id);if(action==="admin")await db.from("profiles").update({role:"admin",status:"approved"}).eq("id",id);if(action==="member")await db.from("profiles").update({role:"member"}).eq("id",id);revalidatePath("/admin");}
 export async function updateMyName(data:FormData){const user=await currentProfile();if(!user)throw new Error("Unauthorized");const name=String(data.get("name")||"").trim();const s=await createClient();const {error}=await s.rpc("update_my_name",{new_name:name});if(error)throw new Error(error.message);revalidatePath("/profile");revalidatePath("/dashboard");}
 export async function leaveGroup(data:FormData){const user=await requireApproved();const groupId=String(data.get("group_id"));const s=await createClient();const {data:group}=await s.from("groups").select("created_by").eq("id",groupId).single();if(group?.created_by===user.id)throw new Error("Group creators can delete the group, but cannot leave it.");const {error}=await s.from("group_members").delete().eq("group_id",groupId).eq("user_id",user.id);if(error)throw new Error(error.message);revalidatePath("/dashboard");redirect("/dashboard");}
+export async function updateGroupName(data:FormData){const user=await requireApproved();const groupId=String(data.get("group_id"));const name=String(data.get("name")||"").trim();if(!name)return;const s=await createClient();const {error}=await s.from("groups").update({name}).eq("id",groupId).eq("created_by",user.id);if(error)throw new Error(error.message);revalidatePath(`/groups/${groupId}`);redirect(`/groups/${groupId}`);}
 export async function deleteGroup(data:FormData){const user=await requireApproved();const groupId=String(data.get("group_id"));const s=await createClient();const {error}=await s.from("groups").delete().eq("id",groupId).eq("created_by",user.id);if(error)throw new Error(error.message);revalidatePath("/dashboard");redirect("/dashboard");}
